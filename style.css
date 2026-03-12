@@ -1,6 +1,89 @@
+/* General Formatting */
+html {
+    font-size: 100%;
+}
 
+/* Button formatting */
 .start-btn, .reset-btn{
   position: absolute;
   bottom: 0;          
   right: 0;           
+}
+
+/* flex box for dice container*/
+.dice-container {
+    display: flex;
+    column-gap: 20px;
+}
+/* align left and right */
+.rolled-div, .saved-div {
+    display: flex;
+    flex: 1;
+    border: 1px solid black;
+}
+
+/* Dice object styling */
+.face {    
+    margin: 20px;
+    padding: 20px;
+
+    background-color: #e7e7e7;
+    width: 104px;
+    height: 104px;
+    object-fit: contain;
+
+    box-shadow:
+        inset 0 5px white, 
+        inset 0 -5px #bbb,
+        inset 5px 0 #d7d7d7, 
+        inset -5px 0 #d7d7d7;
+    
+    border-radius: 10%;
+
+    display: grid;
+    grid-template-rows: repeat(3, 1fr);
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-areas: 
+        "a . c"
+        "e g f"
+        "d . b";
+}
+
+.pip {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  margin: 4px;
+
+  background-color: #333;
+  box-shadow: inset 0 3px #111, inset 0 -3px #555;
+}
+
+.pip:nth-child(1) {
+    grid-area: a;
+}
+
+.pip:nth-child(2) {
+    grid-area: b;
+}
+
+.pip:nth-child(3) {
+    grid-area: c;
+}
+
+.pip:nth-child(4) {
+    grid-area: d;
+}
+
+.pip:nth-child(5) {
+    grid-area: e;
+}
+
+.pip:nth-child(6) {
+    grid-area: f;
+}
+
+.pip:nth-child(odd):last-child {
+    grid-area: g;
 }
