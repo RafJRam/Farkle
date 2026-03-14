@@ -10,7 +10,7 @@ let currentPlayer = 0;
 let runningScore = 0;
 
 // dice values per player
-let remainingDice = 6;
+let numRemaining = 6;
 let rolledDice = Array(6).fill(0);
 let savedDice = Array(6).fill(0);
 let lastPlayer = null;
@@ -82,7 +82,7 @@ function startGame() {
     gameStart = true;
 
     // remove Player Counter div
-    playerCount = counterBox.querySelector("input").value;
+    playerCount = Number(counterBox.querySelector("input").value);
     counterBox.remove();
 
     // start button becomes reset button
@@ -107,7 +107,7 @@ function resetGame() {
     runningScore = 0;
 
     // dice values per player
-    remainingDice = 6;
+    numRemaining = 6;
     rolledDice = Array(6);
     savedDice = Array(6);
     lastPlayer = null;
@@ -146,6 +146,8 @@ passButton.classList.add('pass');
 
 // Each player's turn
 function playerTurn(currPlayer) {
+    console.log(`currPlayer: ${currPlayer}`);
+    
     // Acquire current player div, change background color
     currDiv = document.getElementById(`player${currPlayer}`);
     currDiv.style.backgroundColor = '#951212';
@@ -178,6 +180,9 @@ function playerTurn(currPlayer) {
 
 // Rolls a batch of dice and returns result in an array
 function rollDice(numDice) {
+
+    console.log("numdice: " + numDice);
+    
     // rolls single dice
     const roll = () => Math.floor(Math.random() * 6) + 1;
 
@@ -201,30 +206,67 @@ function rollDice(numDice) {
  * Single 5 = 50
  * Single 1 = 100
  */
-function scoreDice(diceValues) {
-    // delete
-    let totalScore = 1000;
+function transferDice() {
 
-    // after finding out how many dice to swap over
-    // test moving to savedDice and change remaining dice
+}
+
+function scoreDice(diceValues) {
+
+    let diceCounts = new Map();
+    let transferCount = 0;
+    let score = 0;
+
+    diceValues.forEach(num => {
+        diceCounts.set(num, (diceCounts.get(num) || 0) + 1);
+    });
+
+    // Two triples = 2,500
+    if ([...diceCounts.values] == [3, 3]) {
+        console.log("two triples");
+        transferCount = 6;
+        score = 2500;
+    } // Four of a kind + pair = 1,500 
+    else if ([...diceCounts.values] == [4, 2]) {
+        console.log("4 of a kind + pair");
+        transferCount = 6;
+        score = 1500;
+    } // Three pairs 
+    else if ([...diceCounts.values] == [2, 2, 2]) {
+        console.log("3 pairs");
+        transferCount = 6;
+        score = 1500;
+    } // 1-6 straight
+    else if ([...diceCounts.values] == [1, 1, 1, 1, 1, 1]){
+        console.log("1-6 straight");
+        transferCount = 6;
+        score = 1500;
+
+    } // Six of a kind
+    else if ([...diceCounts.values] == [6]) {
+        console.log("Six of a kind");
+        transferCount = 6;
+        score = 3000;
+    }
+    // TODO FINISH scoring
 
     // this number is how many dice will score, HARDCODED rn
     const gap = 2;    
 
     // saved amount before adding more to savedDice
-    const savedAmount = 6-remainingDice;
+    const savedAmount = 6-numRemaining;
     
     // subarray of rollDice to swap to savedDice
-    const scoringDice = rolledDice.slice(remainingDice-gap, remainingDice);
+    const scoringDice = rolledDice.slice(numRemaining-gap, numRemaining);
     
     // replace subarray with gap 0s
-    rolledDice.splice(remainingDice-gap, gap, ...Array(gap).fill(0));
+    rolledDice.splice(numRemaining-gap, gap, ...Array(gap).fill(0));
 
     /* replace first X dice starting at i=savedAmount, X being gap,
     with scoringDice*/
 
     savedDice.splice(savedAmount, gap, ...scoringDice);
-    remainingDice -= gap;
+    
+    numRemaining -= gap;
 
     return totalScore;
 }
@@ -272,7 +314,7 @@ function renderDice(rolled, saved) {
 
 // roll button event
 rollButton.addEventListener('click', function () {
-    
+    if (!gameStart) return;
     // clear all dice before re-rolling
     const rolledDiv = document.getElementById("rolled-div");
     const savedDiv = document.getElementById("saved-div");
@@ -280,14 +322,26 @@ rollButton.addEventListener('click', function () {
     rolledDiv.replaceChildren();
     savedDiv.replaceChildren();
 
-    if (runningScore == 0) {
-        // 6 initially, changes after
+    if (runningScore == 0) { // initial full roll
         rolledDice = rollDice(6);
     }
-    else {
-        // Replaces the first X numbers with new roll, X = remainingDice  
-        // rolledDice = [[new role replacing]+[saved dice length of 0s]]
-        rolledDice.splice(0, remainingDice, ...rollDice(remainingDice));
+    else { // every subsequent roll
+ 
+        // savedDice has 6 dice
+        if (numRemaining == 0) {
+            numRemaining = 6;
+
+            console.log('full re-roll');
+            
+            // flush savedDice and fully re-roll
+            savedDice = Array(6).fill(0);
+            rolledDice = rollDice(6);   
+        }
+        else {
+            // Replaces the first X numbers with new roll, X = numRemaining  
+            // rolledDice = [[new role replacing]+[saved dice length of 0s]]
+            rolledDice.splice(0, numRemaining, ...rollDice(numRemaining));
+        }
     }
 
     // before scoring
@@ -297,7 +351,7 @@ rollButton.addEventListener('click', function () {
 
     // pass in subarray of dice that got replaced/rolled first time
     // add to running score
-    runningScore += scoreDice(rolledDice.slice(0, remainingDice));
+    runningScore += scoreDice(rolledDice.slice(0, numRemaining));
 
     // after scoring
 
@@ -312,6 +366,14 @@ rollButton.addEventListener('click', function () {
 
 // pass button event
 passButton.addEventListener('click', function () {
+    if (!gameStart) return;
+    
+    // Empty rolled and saved arrays
+    numRemaining = 6;
+    rolledDice.fill(0);
+    savedDice.fill(0);
+
+    console.log(`runningScore about to be added to ${scores[currentPlayer]}: ${runningScore}`);
     
     /* SCORING */
     scores[currentPlayer] += runningScore;
@@ -319,7 +381,8 @@ passButton.addEventListener('click', function () {
     
     // If current player is last player, end game and determine winner
     if (currentPlayer == lastPlayer) {
-        const winner = scores.indexOf(Math.max(...scores)) + 1;
+        const winner = scores.indexOf(Math.max(...scores));
+        gameStart = false;
         console.log(`Game over! Player ${winner} wins!`);
         
         return;
@@ -331,9 +394,11 @@ passButton.addEventListener('click', function () {
     scoreDiv.innerHTML = `Score: ${scores[currentPlayer]} <br><br>`;
 
     // Determine final player to exit game loop
-    if (scores[currentPlayer] >= 3000) {
+    if (scores[currentPlayer] >= 3000 && lastPlayer == null) {
         // last player will be the previous player, but if current player is player 0, final player will be the rightmost player
         lastPlayer = currentPlayer == 0 ? playerCount - 1 : currentPlayer - 1;
+        console.log(`lastPlayer: ${lastPlayer}`);
+        
     }
     
     // revert background
@@ -347,8 +412,7 @@ passButton.addEventListener('click', function () {
     passButton.remove();
     
     // increment turn to next player
-    const nextPlayer = currentPlayer == playerCount - 1 ? 0 : currentPlayer + 1;
-    currentPlayer = nextPlayer;    
-    playerTurn(nextPlayer);
+    currentPlayer = currentPlayer == playerCount - 1 ? 0 : currentPlayer + 1;    
+    playerTurn(currentPlayer);
 });
 
